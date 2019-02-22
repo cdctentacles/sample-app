@@ -6,3 +6,8 @@ Same app can read data from Azure Event hubs and write to RC Collection
 with configuration change.
 
 This app can be used to show disaster recovery scenario.
+
+Todo:
+* Integrate with CDC.
+* Parameterize the main-or-backup app.
+* Parameterize the configuration around azure-event-hubs.
