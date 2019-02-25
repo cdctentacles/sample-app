@@ -25,6 +25,7 @@ namespace VotingWeb
                 {
                     logging.AddConsole();
                 })
+                .UseUrls("http://*:80")
                 .Build();
     }
 }

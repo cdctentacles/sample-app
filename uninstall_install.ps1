@@ -10,7 +10,7 @@ Remove-ServiceFabricApplication fabric:/votingapp -Force
 Unregister-ServiceFabricApplicationType VotingType 1.0.0 -Force
 Remove-ServiceFabricApplicationPackage VotingType
 
-Copy-ServiceFabricApplicationPackage -ApplicationPackagePath $AppPath -ApplicationPackageCopyPath $UploadPath -CompressPackage -ApplicationPackagePathInImageStore VotingType -TimeoutSec 1800 -ShowProgress
+Copy-ServiceFabricApplicationPackage -ApplicationPackagePathInImageStore VotingType -ApplicationPackagePath $AppPath -ApplicationPackageCopyPath $UploadPath -CompressPackage -TimeoutSec 1800 -ShowProgress
 Register-ServiceFabricApplicationType VotingType
 New-ServiceFabricApplication fabric:/votingapp VotingType 1.0.0
 

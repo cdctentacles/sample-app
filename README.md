@@ -8,6 +8,7 @@ with configuration change.
 This app can be used to show disaster recovery scenario.
 
 Todo:
+* Use VotingApp that uses RC.
 * Integrate with CDC.
 * Parameterize the main-or-backup app.
 * Parameterize the configuration around azure-event-hubs.
