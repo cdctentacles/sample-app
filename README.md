@@ -12,3 +12,4 @@ Todo:
 * Integrate with CDC.
 * Parameterize the main-or-backup app.
 * Parameterize the configuration around azure-event-hubs.
+* Deploy https://hub.docker.com/r/microsoft/service-fabric-reverse-proxy/tags on linux for reverse proxy.

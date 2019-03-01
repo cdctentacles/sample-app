@@ -19,7 +19,8 @@
       </ExeHost>
     </EntryPoint>
     <EnvironmentVariables>
-        <EnvironmentVariable Name="ReverseProxyBaseUri" Value="http://localhost:19081"/>
+      <EnvironmentVariable Name="ReverseProxyBaseUri" Value="http://localhost:19081"/>
+      <EnvironmentVariable Name="ASPNETCORE_ENVIRONMENT" Value="Development"/>
     </EnvironmentVariables>
   </CodePackage>
 
