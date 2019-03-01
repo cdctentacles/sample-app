@@ -1,90 +1,132 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+// ------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
+//  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 
 namespace VotingWeb.Controllers
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Fabric;
+    using System.Fabric.Query;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json;
+
+    [Produces("application/json")]
     [Route("api/[controller]")]
     public class VotesController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILogger _logger;
-        private DateTime _timer;
+        private readonly HttpClient httpClient;
+        private readonly FabricClient fabricClient;
+        private readonly string reverseProxyBaseUri;
+        private readonly StatelessServiceContext serviceContext;
 
-        private static string backendDNSName = Environment.GetEnvironmentVariable("Voting_BackendHostName");
-
-        private static Uri backendUrl = new Uri($"http://{backendDNSName}:{Environment.GetEnvironmentVariable("Voting_BackendHostPort")}/api/votesdata");
-
-        public VotesController(HttpClient httpClient, ILogger<VotesController> logger)
+        public VotesController(HttpClient httpClient, StatelessServiceContext context, FabricClient fabricClient)
         {
-            _httpClient = httpClient;
-            _logger = logger;
+            this.fabricClient = fabricClient;
+            this.httpClient = httpClient;
+            this.serviceContext = context;
+            this.reverseProxyBaseUri = Environment.GetEnvironmentVariable("ReverseProxyBaseUri");
         }
 
-        // GET api/votes
-        [HttpGet]
+        // GET: api/Votes
+        [HttpGet("")]
         public async Task<IActionResult> Get()
         {
-            _timer = DateTime.Now;
-            _logger.LogInformation("Getting votes");
+            Uri serviceName = VotingWeb.GetVotingDataServiceName(this.serviceContext);
+            Uri proxyAddress = this.GetProxyAddress(serviceName);
 
-            var result = new Dictionary<string, int>();
+            ServicePartitionList partitions = await this.fabricClient.QueryManager.GetPartitionListAsync(serviceName);
 
-            using (HttpResponseMessage response = await _httpClient.GetAsync(backendUrl))
+            List<KeyValuePair<string, int>> result = new List<KeyValuePair<string, int>>();
+
+            foreach (Partition partition in partitions)
             {
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                string proxyUrl =
+                    $"{proxyAddress}/api/VoteData?PartitionKey={((Int64RangePartitionInformation) partition.PartitionInformation).LowKey}&PartitionKind=Int64Range";
+
+                using (HttpResponseMessage response = await this.httpClient.GetAsync(proxyUrl))
                 {
-                    result = JsonConvert.DeserializeObject<Dictionary<string, int>>(await response.Content.ReadAsStringAsync());
+                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        continue;
+                    }
+
+                    result.AddRange(JsonConvert.DeserializeObject<List<KeyValuePair<string, int>>>(await response.Content.ReadAsStringAsync()));
                 }
             }
-
-            _logger.LogInformation($"Returning votes in { DateTime.Now.Millisecond - _timer.Millisecond }ms");
 
             return this.Json(result);
         }
 
-        // PUT api/votes/name
+        // PUT: api/Votes/name
         [HttpPut("{name}")]
-        public async Task<ContentResult> Put(string name)
+        public async Task<IActionResult> Put(string name)
         {
-            _timer = DateTime.Now;
-            _logger.LogInformation("Adding vote");
+            Uri serviceName = VotingWeb.GetVotingDataServiceName(this.serviceContext);
+            Uri proxyAddress = this.GetProxyAddress(serviceName);
+            long partitionKey = this.GetPartitionKey(name);
+            string proxyUrl = $"{proxyAddress}/api/VoteData/{name}?PartitionKey={partitionKey}&PartitionKind=Int64Range";
 
-            using (HttpResponseMessage response = await _httpClient.PutAsync($"{backendUrl}/{name}", new StringContent("")))
+            StringContent putContent = new StringContent($"{{ 'name' : '{name}' }}", Encoding.UTF8, "application/json");
+            putContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+            using (HttpResponseMessage response = await this.httpClient.PutAsync(proxyUrl, putContent))
             {
-
-                _logger.LogInformation($"Added vote in { DateTime.Now.Millisecond - _timer.Millisecond }ms");
-
                 return new ContentResult()
                 {
-                    StatusCode = (int)response.StatusCode,
+                    StatusCode = (int) response.StatusCode,
                     Content = await response.Content.ReadAsStringAsync()
                 };
             }
         }
 
-        // DELETE api/votes/name
+        // DELETE: api/Votes/name
         [HttpDelete("{name}")]
         public async Task<IActionResult> Delete(string name)
         {
-            _timer = DateTime.Now;
-            _logger.LogInformation("Adding vote");
+            Uri serviceName = VotingWeb.GetVotingDataServiceName(this.serviceContext);
+            Uri proxyAddress = this.GetProxyAddress(serviceName);
+            long partitionKey = this.GetPartitionKey(name);
+            string proxyUrl = $"{proxyAddress}/api/VoteData/{name}?PartitionKey={partitionKey}&PartitionKind=Int64Range";
 
-            using (HttpResponseMessage response = await _httpClient.DeleteAsync($"{backendUrl}/{name}"))
+            using (HttpResponseMessage response = await this.httpClient.DeleteAsync(proxyUrl))
             {
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
-                    return this.StatusCode((int)response.StatusCode);
+                    return this.StatusCode((int) response.StatusCode);
                 }
             }
 
-            _logger.LogInformation($"Added vote in { DateTime.Now.Millisecond - _timer.Millisecond }ms");
-
             return new OkResult();
+        }
+
+
+        /// <summary>
+        /// Constructs a reverse proxy URL for a given service.
+        /// Example: http://localhost:19081/VotingApplication/VotingData/
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <returns></returns>
+        private Uri GetProxyAddress(Uri serviceName)
+        {
+            return new Uri($"{this.reverseProxyBaseUri}{serviceName.AbsolutePath}");
+        }
+
+        /// <summary>
+        /// Creates a partition key from the given name.
+        /// Uses the zero-based numeric position in the alphabet of the first letter of the name (0-25).
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        private long GetPartitionKey(string name)
+        {
+            return Char.ToUpper(name.First()) - 'A';
         }
     }
 }
