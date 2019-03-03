@@ -5,6 +5,7 @@
 
 namespace VotingData
 {
+    using System;
     using System.Collections.Generic;
     using System.Fabric;
     using System.IO;
@@ -14,9 +15,12 @@ namespace VotingData
     using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
     using Microsoft.ServiceFabric.Services.Communication.Runtime;
     using Microsoft.ServiceFabric.Services.Runtime;
+    using ProducerPlugin;
+    using CDC.EventCollector;
+    using CDC.AzureEventCollector;
 
     /// <summary>
-    /// The FabricRuntime creates an instance of this class for each service type instance. 
+    /// The FabricRuntime creates an instance of this class for each service type instance.
     /// </summary>
     internal sealed class VotingData : StatefulService
     {
@@ -41,6 +45,8 @@ namespace VotingData
                             {
                                 ServiceEventSource.Current.ServiceMessage(serviceContext, $"Starting Kestrel on {url}");
 
+                                this.SetCDCEventCollector(this.StateManager, this.Partition.PartitionInfo.Id);
+
                                 return new WebHostBuilder()
                                     .UseKestrel()
                                     .ConfigureServices(
@@ -55,6 +61,22 @@ namespace VotingData
                                     .Build();
                             }))
             };
+        }
+
+        private void SetCDCEventCollector(IReliableStateManager stateManager, Guid partitionId)
+        {
+            var sfEventSource = new ServiceFabricSourceFactory(stateManager, partitionId, "VotingDataSource");
+            var healthStore = new ServiceFabricHealthStore();
+            var persistentCollector = new Collector(partitionId,
+                "Endpoint=sb://cdctentacles.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=abcdefghijklmnopqrstuvwxyz",
+                "test1",
+                1,
+                healthStore,
+                TimeSpan.FromSeconds(1));
+
+            var persistentCollectors = new List<IPersistentCollector>() { persistentCollector };
+            var conf = new Configuration(sfEventSource, persistentCollectors).SetHealthStore(healthStore);
+            CDCCollector.NewCollectorConfiguration(conf);
         }
     }
 }
