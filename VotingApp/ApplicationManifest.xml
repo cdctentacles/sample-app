@@ -5,13 +5,22 @@
     <Parameter Name="VotingData_PartitionCount" DefaultValue="1" />
     <Parameter Name="VotingData_TargetReplicaSetSize" DefaultValue="1" />
     <Parameter Name="VotingWeb_InstanceCount" DefaultValue="1" />
+    <Parameter Name="CDC_AzureEventHubsConnectionString" DefaultValue="" />
+    <Parameter Name="CDC_EventHubName" DefaultValue="" />
   </Parameters>
   <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion
        should match the Name and Version attributes of the ServiceManifest element defined in the
        ServiceManifest.xml file. -->
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="VotingDataPkg" ServiceManifestVersion="1.0.0" />
-    <ConfigOverrides />
+    <ConfigOverride Name="Config">
+       <Settings>
+         <Section Name="CDCConfigSection">
+          <Parameter Name="CDC_AzureEventHubsConnectionString" Value="[CDC_AzureEventHubsConnectionString]" />
+          <Parameter Name="CDC_EventHubName" Value="[CDC_EventHubName]" />
+         </Section>
+       </Settings>
+    </ConfigOverride>
   </ServiceManifestImport>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="VotingWebPkg" ServiceManifestVersion="1.0.0" />

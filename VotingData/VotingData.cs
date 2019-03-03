@@ -45,7 +45,15 @@ namespace VotingData
                             {
                                 ServiceEventSource.Current.ServiceMessage(serviceContext, $"Starting Kestrel on {url}");
 
-                                this.SetCDCEventCollector(this.StateManager, this.Partition.PartitionInfo.Id);
+                                var configurationPackage = this.Context.CodePackageActivationContext.
+                                    GetConfigurationPackageObject("Config");
+                                var cDCAzureEventHubsConnectionString = configurationPackage.Settings
+                                    .Sections["CDCConfigSection"].Parameters["CDC_AzureEventHubsConnectionString"];
+                                var cDCEventHubName = configurationPackage.Settings
+                                    .Sections["CDCConfigSection"].Parameters["CDC_EventHubName"];
+
+                                this.SetCDCEventCollector(this.StateManager, this.Partition.PartitionInfo.Id,
+                                    cDCAzureEventHubsConnectionString, cDCEventHubName);
 
                                 return new WebHostBuilder()
                                     .UseKestrel()
@@ -63,16 +71,16 @@ namespace VotingData
             };
         }
 
-        private void SetCDCEventCollector(IReliableStateManager stateManager, Guid partitionId)
+        private void SetCDCEventCollector(IReliableStateManager stateManager, Guid partitionId, string eventHubConnectionString, string eventHubName)
         {
             var sfEventSource = new ServiceFabricSourceFactory(stateManager, partitionId, "VotingDataSource");
             var healthStore = new ServiceFabricHealthStore();
             var persistentCollector = new Collector(partitionId,
-                "Endpoint=sb://cdctentacles.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=abcdefghijklmnopqrstuvwxyz",
-                "test1",
-                1,
+                eventHubConnectionString,
+                eventHubName,
+                5,
                 healthStore,
-                TimeSpan.FromSeconds(1));
+                TimeSpan.FromSeconds(5));
 
             var persistentCollectors = new List<IPersistentCollector>() { persistentCollector };
             var conf = new Configuration(sfEventSource, persistentCollectors).SetHealthStore(healthStore);
