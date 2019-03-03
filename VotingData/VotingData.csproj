@@ -5,17 +5,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+    <Folder Include="wwwroot/" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.2.1" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.2" />
-    <PackageReference Include="Microsoft.ServiceFabric" Version="6.4.617" />
-    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="3.3.617" />
-    <PackageReference Include="Microsoft.ServiceFabric.Data" Version="3.3.617" />
-    <PackageReference Include="Microsoft.ServiceFabric.Services" Version="3.3.617" />
+    <PackageReference Include="Microsoft.ServiceFabric" Version="6.4.624" />
+    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="3.3.624" />
+    <PackageReference Include="Microsoft.ServiceFabric.Data" Version="3.3.624" />
+    <PackageReference Include="Microsoft.ServiceFabric.Services" Version="3.3.624" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../eventcollector/src/eventcollector.csproj" />
+    <ProjectReference Include="../../producer-plugin/ProducerPlugin/ProducerPlugin/ProducerPlugin.csproj" />
+    <ProjectReference Include="../../azure-event-bus-collector/azureeventbuscollector.csproj" />
   </ItemGroup>
 
 </Project>
