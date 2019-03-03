@@ -13,14 +13,16 @@
        ServiceManifest.xml file. -->
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="VotingDataPkg" ServiceManifestVersion="1.0.0" />
-    <ConfigOverride Name="Config">
-       <Settings>
-         <Section Name="CDCConfigSection">
-          <Parameter Name="CDC_AzureEventHubsConnectionString" Value="[CDC_AzureEventHubsConnectionString]" />
-          <Parameter Name="CDC_EventHubName" Value="[CDC_EventHubName]" />
-         </Section>
-       </Settings>
-    </ConfigOverride>
+    <ConfigOverrides>
+      <ConfigOverride Name="Config">
+        <Settings>
+          <Section Name="CDCConfigSection">
+            <Parameter Name="CDC_AzureEventHubsConnectionString" Value="[CDC_AzureEventHubsConnectionString]" />
+            <Parameter Name="CDC_EventHubName" Value="[CDC_EventHubName]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
   </ServiceManifestImport>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="VotingWebPkg" ServiceManifestVersion="1.0.0" />

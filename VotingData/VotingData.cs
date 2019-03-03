@@ -48,9 +48,15 @@ namespace VotingData
                                 var configurationPackage = this.Context.CodePackageActivationContext.
                                     GetConfigurationPackageObject("Config");
                                 var cDCAzureEventHubsConnectionString = configurationPackage.Settings
-                                    .Sections["CDCConfigSection"].Parameters["CDC_AzureEventHubsConnectionString"];
+                                    .Sections["CDCConfigSection"].Parameters["CDC_AzureEventHubsConnectionString"].Value;
                                 var cDCEventHubName = configurationPackage.Settings
-                                    .Sections["CDCConfigSection"].Parameters["CDC_EventHubName"];
+                                    .Sections["CDCConfigSection"].Parameters["CDC_EventHubName"].Value;
+
+                                if (String.IsNullOrEmpty(cDCAzureEventHubsConnectionString) ||
+                                    String.IsNullOrEmpty(cDCEventHubName))
+                                {
+                                    throw new InvalidDataException($"EventHubs ConnectionString and HubsName is empty : {cDCAzureEventHubsConnectionString} {cDCEventHubName}");
+                                }
 
                                 this.SetCDCEventCollector(this.StateManager, this.Partition.PartitionInfo.Id,
                                     cDCAzureEventHubsConnectionString, cDCEventHubName);
