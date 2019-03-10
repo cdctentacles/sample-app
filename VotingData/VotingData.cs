@@ -9,6 +9,10 @@ namespace VotingData
     using System.Collections.Generic;
     using System.Fabric;
     using System.IO;
+
+    using CDC.EventCollector;
+    using CDC.AzureEventCollector;
+    using EventHubsConsumer;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.ServiceFabric.Data;
@@ -16,8 +20,6 @@ namespace VotingData
     using Microsoft.ServiceFabric.Services.Communication.Runtime;
     using Microsoft.ServiceFabric.Services.Runtime;
     using ProducerPlugin;
-    using CDC.EventCollector;
-    using CDC.AzureEventCollector;
 
     /// <summary>
     /// The FabricRuntime creates an instance of this class for each service type instance.
@@ -51,6 +53,13 @@ namespace VotingData
                                     .Sections["CDCConfigSection"].Parameters["CDC_AzureEventHubsConnectionString"].Value;
                                 var cDCEventHubName = configurationPackage.Settings
                                     .Sections["CDCConfigSection"].Parameters["CDC_EventHubName"].Value;
+                                var cdcIsSourceCluster = configurationPackage.Settings
+                                    .Sections["CDCConfigSection"].Parameters["CDC_SourceCluster"].Value;
+                                var isSouceCluster = true;
+                                if (!bool.TryParse(cdcIsSourceCluster, out isSouceCluster))
+                                {
+                                    throw new InvalidDataException($"CDC Parameter : CDC_SourceCluster {cdcIsSourceCluster} is not parsable as bool.");
+                                }
 
                                 if (String.IsNullOrEmpty(cDCAzureEventHubsConnectionString) ||
                                     String.IsNullOrEmpty(cDCEventHubName))
@@ -59,7 +68,7 @@ namespace VotingData
                                 }
 
                                 this.SetCDCEventCollector(this.StateManager, this.Partition.PartitionInfo.Id,
-                                    cDCAzureEventHubsConnectionString, cDCEventHubName);
+                                    cDCAzureEventHubsConnectionString, cDCEventHubName, isSouceCluster);
 
                                 return new WebHostBuilder()
                                     .UseKestrel()
@@ -77,19 +86,36 @@ namespace VotingData
             };
         }
 
-        private void SetCDCEventCollector(IReliableStateManager stateManager, Guid partitionId, string eventHubConnectionString, string eventHubName)
+        private void SetCDCEventCollector(IReliableStateManager stateManager, Guid partitionId,
+            string eventHubConnectionString, string eventHubName, bool isSouceCluster)
         {
-            var sfEventSource = new ServiceFabricSourceFactory(stateManager, partitionId, "VotingDataSource");
+            ISourceFactory sourceFactory = null;
             var healthStore = new ServiceFabricHealthStore();
-            var persistentCollector = new Collector(partitionId,
-                eventHubConnectionString,
-                eventHubName,
-                5,
-                healthStore,
-                TimeSpan.FromSeconds(5));
+            List<IPersistentCollector> persistentCollectors = null;
+            var messageConverter = new JsonMessageConverter(new List<Type>());
 
-            var persistentCollectors = new List<IPersistentCollector>() { persistentCollector };
-            var conf = new Configuration(sfEventSource, persistentCollectors).SetHealthStore(healthStore);
+            if (isSouceCluster)
+            {
+                sourceFactory = new ServiceFabricSourceFactory(stateManager, partitionId, "VotingDataSource", messageConverter);
+                var persistentCollector = new Collector(partitionId,
+                    eventHubConnectionString,
+                    eventHubName,
+                    5,
+                    healthStore,
+                    TimeSpan.FromSeconds(5));
+
+                persistentCollectors = new List<IPersistentCollector>() { persistentCollector };
+            }
+            else
+            {
+                var eventHubsConfiguration = new EventHubsConfiguration(eventHubConnectionString, eventHubName, "", "", "");
+                sourceFactory = new CollectorEventsProducerFactory(eventHubsConfiguration);
+                var persistentCollector = new ServiceFabricPersistentCollector(partitionId, stateManager,
+                    healthStore, messageConverter);
+                persistentCollectors = new List<IPersistentCollector>() { persistentCollector };
+            }
+
+            var conf = new Configuration(sourceFactory, persistentCollectors).SetHealthStore(healthStore);
             CDCCollector.NewCollectorConfiguration(conf);
         }
     }

@@ -7,6 +7,7 @@
     <Parameter Name="VotingWeb_InstanceCount" DefaultValue="1" />
     <Parameter Name="CDC_AzureEventHubsConnectionString" DefaultValue="" />
     <Parameter Name="CDC_EventHubName" DefaultValue="" />
+    <Parameter Name="CDC_SourceCluster" DefaultValue="true" />
   </Parameters>
   <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion
        should match the Name and Version attributes of the ServiceManifest element defined in the
@@ -19,6 +20,7 @@
           <Section Name="CDCConfigSection">
             <Parameter Name="CDC_AzureEventHubsConnectionString" Value="[CDC_AzureEventHubsConnectionString]" />
             <Parameter Name="CDC_EventHubName" Value="[CDC_EventHubName]" />
+            <Parameter Name="CDC_SourceCluster" Value="[CDC_SourceCluster]" />
           </Section>
         </Settings>
       </ConfigOverride>

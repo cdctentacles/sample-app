@@ -8,8 +8,9 @@ with configuration change.
 This app can be used to show disaster recovery scenario.
 
 Todo:
-* Use VotingApp that uses RC.
-* Integrate with CDC.
-* Parameterize the main-or-backup app.
-* Parameterize the configuration around azure-event-hubs.
-* Deploy https://hub.docker.com/r/microsoft/service-fabric-reverse-proxy/tags on linux for reverse proxy.
+* Done. Use VotingApp that uses RC.
+* Done. Integrate with CDC.
+* Done. Parameterize the main-or-backup app.
+* Done. Parameterize the configuration around azure-event-hubs.
+* Linux not working. so drop this : Deploy https://hub.docker.com/r/microsoft/service-fabric-reverse-proxy/tags on linux for reverse proxy.
+* Handle the data migration story to main cluster after main cluster is recovered.
