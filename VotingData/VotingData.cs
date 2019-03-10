@@ -56,11 +56,11 @@ namespace VotingData
                                 var cdcIsSourceCluster = configurationPackage.Settings
                                     .Sections["CDCConfigSection"].Parameters["CDC_SourceCluster"].Value;
                                 var cdcStorageContainerName = configurationPackage.Settings
-                                    .Sections["CDCConfigSection"].Parameter["CDC_StorageContainerName"].Value;
+                                    .Sections["CDCConfigSection"].Parameters["CDC_StorageContainerName"].Value;
                                 var cdcStorageAccountName = configurationPackage.Settings
-                                    .Sections["CDCConfigSection"].Parameter["CDC_StorageAccountName"].Value;
+                                    .Sections["CDCConfigSection"].Parameters["CDC_StorageAccountName"].Value;
                                 var cdcStorageAccountKey = configurationPackage.Settings
-                                    .Sections["CDCConfigSection"].Parameter["CDC_StorageAccountKey"].Value;
+                                    .Sections["CDCConfigSection"].Parameters["CDC_StorageAccountKey"].Value;
 
                                 var isSouceCluster = true;
                                 if (!bool.TryParse(cdcIsSourceCluster, out isSouceCluster))
