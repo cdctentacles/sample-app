@@ -8,6 +8,9 @@
     <Parameter Name="CDC_AzureEventHubsConnectionString" DefaultValue="" />
     <Parameter Name="CDC_EventHubName" DefaultValue="" />
     <Parameter Name="CDC_SourceCluster" DefaultValue="true" />
+    <Parameter Name="CDC_StorageContainerName" DefaultValue="" />
+    <Parameter Name="CDC_StorageAccountName" DefaultValue="" />
+    <Parameter Name="CDC_StorageAccountKey" DefaultValue="" />
   </Parameters>
   <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion
        should match the Name and Version attributes of the ServiceManifest element defined in the
@@ -21,6 +24,9 @@
             <Parameter Name="CDC_AzureEventHubsConnectionString" Value="[CDC_AzureEventHubsConnectionString]" />
             <Parameter Name="CDC_EventHubName" Value="[CDC_EventHubName]" />
             <Parameter Name="CDC_SourceCluster" Value="[CDC_SourceCluster]" />
+            <Parameter Name="CDC_StorageContainerName" Value="[CDC_StorageContainerName]" />
+            <Parameter Name="CDC_StorageAccountName" Value="[CDC_StorageAccountName]" />
+            <Parameter Name="CDC_StorageAccountKey" Value="[CDC_StorageAccountKey]" />
           </Section>
         </Settings>
       </ConfigOverride>

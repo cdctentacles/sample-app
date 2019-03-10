@@ -55,6 +55,13 @@ namespace VotingData
                                     .Sections["CDCConfigSection"].Parameters["CDC_EventHubName"].Value;
                                 var cdcIsSourceCluster = configurationPackage.Settings
                                     .Sections["CDCConfigSection"].Parameters["CDC_SourceCluster"].Value;
+                                var cdcStorageContainerName = configurationPackage.Settings
+                                    .Sections["CDCConfigSection"].Parameter["CDC_StorageContainerName"].Value;
+                                var cdcStorageAccountName = configurationPackage.Settings
+                                    .Sections["CDCConfigSection"].Parameter["CDC_StorageAccountName"].Value;
+                                var cdcStorageAccountKey = configurationPackage.Settings
+                                    .Sections["CDCConfigSection"].Parameter["CDC_StorageAccountKey"].Value;
+
                                 var isSouceCluster = true;
                                 if (!bool.TryParse(cdcIsSourceCluster, out isSouceCluster))
                                 {
@@ -68,7 +75,8 @@ namespace VotingData
                                 }
 
                                 this.SetCDCEventCollector(this.StateManager, this.Partition.PartitionInfo.Id,
-                                    cDCAzureEventHubsConnectionString, cDCEventHubName, isSouceCluster);
+                                    cDCAzureEventHubsConnectionString, cDCEventHubName, isSouceCluster,
+                                    cdcStorageContainerName, cdcStorageAccountName, cdcStorageAccountKey);
 
                                 return new WebHostBuilder()
                                     .UseKestrel()
@@ -87,7 +95,8 @@ namespace VotingData
         }
 
         private void SetCDCEventCollector(IReliableStateManager stateManager, Guid partitionId,
-            string eventHubConnectionString, string eventHubName, bool isSouceCluster)
+            string eventHubConnectionString, string eventHubName, bool isSouceCluster,
+            string storageContainerName, string storageAccountName, string storageAccountKey)
         {
             ISourceFactory sourceFactory = null;
             var healthStore = new ServiceFabricHealthStore();
@@ -108,7 +117,8 @@ namespace VotingData
             }
             else
             {
-                var eventHubsConfiguration = new EventHubsConfiguration(eventHubConnectionString, eventHubName, "", "", "");
+                var eventHubsConfiguration = new EventHubsConfiguration(eventHubConnectionString, eventHubName,
+                    storageContainerName, storageAccountName, storageAccountKey);
                 sourceFactory = new CollectorEventsProducerFactory(eventHubsConfiguration);
                 var persistentCollector = new ServiceFabricPersistentCollector(partitionId, stateManager,
                     healthStore, messageConverter);

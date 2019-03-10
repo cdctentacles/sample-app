@@ -5,6 +5,9 @@
   <Section Name="CDCConfigSection">
     <Parameter Name="CDC_AzureEventHubsConnectionString" Value="" />
     <Parameter Name="CDC_EventHubName" Value="" />
+    <Parameter Name="CDC_SourceCluster" Value="" />
+    <Parameter Name="CDC_StorageContainerName" Value="" />
+    <Parameter Name="CDC_StorageAccountName" Value="" />
+    <Parameter Name="CDC_StorageAccountKey" Value="" />
   </Section>
-
 </Settings>
