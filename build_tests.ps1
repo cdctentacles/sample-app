@@ -15,12 +15,12 @@ function Exec
 }
 
 Write-Host "Building Code"
-rmdir /s /q VotingApp\VotingDataPkg\Code\
+rmdir -Force -Recurse VotingApp\VotingDataPkg\Code\ -ErrorAction Ignore
 pushd VotingData
 Exec { dotnet publish -o ..\VotingApp\VotingDataPkg\Code\ -r win10-x64 }
 popd
 
-rmdir /s /q VotingApp\VotingWebPkg\Code\
+rmdir -Force -Recurse VotingApp\VotingWebPkg\Code\ -ErrorAction Ignore
 pushd VotingWeb
 Exec { dotnet publish -o ..\VotingApp\VotingWebPkg\Code\ -r win10-x64 }
 popd
